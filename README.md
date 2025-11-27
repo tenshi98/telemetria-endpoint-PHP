@@ -106,7 +106,7 @@ DB_PASS=tu_password
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 
-LOG_PATH=/mnt/Desarrollos/Entornos/docker_entorno_lamp/www/test/telemetria-endpoint-PHP/logs
+LOG_PATH=/telemetria-endpoint-PHP/logs
 ```
 
 ### 6. Configurar Servidor Web
@@ -125,9 +125,9 @@ Configurar VirtualHost (opcional):
 ```apache
 <VirtualHost *:80>
     ServerName telemetria.local
-    DocumentRoot /mnt/Desarrollos/Entornos/docker_entorno_lamp/www/test/telemetria-endpoint-PHP/public
+    DocumentRoot /telemetria-endpoint-PHP/public
     
-    <Directory /mnt/Desarrollos/Entornos/docker_entorno_lamp/www/test/telemetria-endpoint-PHP/public>
+    <Directory /telemetria-endpoint-PHP/public>
         AllowOverride All
         Require all granted
     </Directory>
@@ -140,7 +140,7 @@ Configurar VirtualHost (opcional):
 server {
     listen 80;
     server_name telemetria.local;
-    root /mnt/Desarrollos/Entornos/docker_entorno_lamp/www/test/telemetria-endpoint-PHP/public;
+    root /telemetria-endpoint-PHP/public;
     
     index index.php;
     
@@ -234,7 +234,7 @@ Content-Type: application/json
 #### 1. Enviar Datos Válidos
 
 ```bash
-curl -X POST http://localhost/test/telemetria-endpoint-PHP/public/index.php \
+curl -X POST http://localhost/telemetria-endpoint-PHP/public/index.php \
   -H "Content-Type: application/json" \
   -d '{
     "Identificador": "DEVICE001",
@@ -262,7 +262,7 @@ curl -X POST http://localhost/test/telemetria-endpoint-PHP/public/index.php \
 #### 2. Request con Campos Faltantes
 
 ```bash
-curl -X POST http://localhost/test/telemetria-endpoint-PHP/public/index.php \
+curl -X POST http://localhost/telemetria-endpoint-PHP/public/index.php \
   -H "Content-Type: application/json" \
   -d '{
     "Identificador": "DEVICE001"
@@ -284,7 +284,7 @@ curl -X POST http://localhost/test/telemetria-endpoint-PHP/public/index.php \
 #### 3. Dispositivo No Encontrado
 
 ```bash
-curl -X POST http://localhost/test/telemetria-endpoint-PHP/public/index.php \
+curl -X POST http://localhost/telemetria-endpoint-PHP/public/index.php \
   -H "Content-Type: application/json" \
   -d '{
     "Identificador": "UNKNOWN_DEVICE",
