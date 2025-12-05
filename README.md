@@ -8,29 +8,33 @@ Sistema completo de recepción y procesamiento de datos de telemetría construid
 - [Requisitos](#-requisitos)
 - [Instalación](#-instalación)
 - [Configuración](#-configuración)
+- [Ejecución](#-ejecución)
 - [Uso](#-uso)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Módulos](#-módulos)
 - [Migración a Otras Bases de Datos](#-migración-a-otras-bases-de-datos)
-- [Troubleshooting](#-troubleshooting)
+- [Solución de Problemas](#-solución-de-problemas)
+- [Notas Adicionales](#-notas-adicionales)
 
 ## ✨ Características
 
-- **Caché Redis**: Almacenamiento en caché de dispositivos con fallback automático a MySQL
-- **Rate Limiting**: Control de frecuencia de requests configurable
-- **Validación Robusta**: Validación completa de datos de entrada
-- **Cálculo de Distancia**: Fórmula de Haversine para cálculo preciso de distancias
-- **Logging Completo**: Logs por dispositivo, requests inválidos, sistema y errores
-- **Arquitectura Modular**: Fácil mantenimiento y extensión
-- **Abstracción de BD**: Migración simple a otros motores de base de datos
-- **Manejo de Errores**: Registro de errores en base de datos y archivos
+- ✅ **Recepción de datos**: Soporta sólo HTTP POST
+- ✅ **Caché Redis**: Almacenamiento en caché de dispositivos para consultas rápidas
+- ✅ **Rate Limiting**: Control de límite de peticiones por dispositivo configurable
+- ✅ **Validación Robusta**: Validación completa de datos de entrada
+- ✅ **Cálculo de Distancia**: Fórmula de Haversine para cálculo preciso de distancias
+- ✅ **Logging Completo**: Logs por dispositivo, requests inválidos, sistema y errores
+- ✅ **Arquitectura Modular**: Fácil mantenimiento y extensión
+- ✅ **Abstracción de base de datos**: Migración simple a otros motores de base de datos
+- ✅ **Manejo de Errores**: Registro de errores en base de datos y archivos
+- ✅ **Validación de tiempo offline**: Detección de dispositivos fuera de línea
 
-## 📦 Requisitos
+## 🛠️ Requisitos
 
-### Técnicos
+### Software Requerido
 - **PHP**: 7.0 o superior
 - **MySQL**: 5.7 o superior
-- **Redis**: 3.0 o superior
+- **Redis**: 6.0 o superior
 - **Extensiones PHP**:
   - `pdo_mysql`
   - `redis`
@@ -41,18 +45,18 @@ Sistema completo de recepción y procesamiento de datos de telemetría construid
 - Apache 2.4+ con `mod_rewrite` habilitado
 - Nginx 1.10+ (configuración alternativa)
 
-## 🚀 Instalación
+## 📦 Instalación
 
-### 1. Clonar o Descargar el Proyecto
+### 1. Clonar o descargar el proyecto
 
 ```bash
 git clone https://github.com/tenshi98/telemetria-endpoint-PHP.git
+cd telemetria-endpoint-PHP
 ```
 
 ### 2. Configurar Permisos
 
 ```bash
-cd telemetria-endpoint-PHP
 chmod -R 755 .
 chmod -R 777 logs/  # Crear directorio si no existe
 mkdir -p logs/devices
@@ -71,20 +75,26 @@ mysql -u root -p < database/schema.sql
 mysql -u root -p < database/seed.sql
 ```
 
-### 4. Configurar Redis
+### 4. Instalar Redis (opcional)
 
 ```bash
+# Ubuntu/Debian
+sudo apt install redis-server
+
+# Iniciar Redis
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+# o
+redis-server
+
 # Verificar que Redis esté corriendo
 redis-cli ping
 # Debe responder: PONG
-
-# Si no está corriendo, iniciar Redis
-sudo service redis-server start
-# o
-redis-server
 ```
 
-### 5. Configurar Aplicación
+## ⚙️ Configuración
+
+### 1. Configurar variables de entorno
 
 ```bash
 # Copiar archivo de configuración de ejemplo
@@ -108,56 +118,6 @@ REDIS_PORT=6379
 
 LOG_PATH=/telemetria-endpoint-PHP/logs
 ```
-
-### 6. Configurar Servidor Web
-
-#### Apache
-
-El archivo `.htaccess` ya está incluido en `public/`. Asegúrate de que `mod_rewrite` esté habilitado:
-
-```bash
-sudo a2enmod rewrite
-sudo service apache2 restart
-```
-
-Configurar VirtualHost (opcional):
-
-```apache
-<VirtualHost *:80>
-    ServerName telemetria.local
-    DocumentRoot /telemetria-endpoint-PHP/public
-    
-    <Directory /telemetria-endpoint-PHP/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-```
-
-#### Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name telemetria.local;
-    root /telemetria-endpoint-PHP/public;
-    
-    index index.php;
-    
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
-```
-
-## ⚙️ Configuración
 
 ### Archivo de Configuración Principal
 
@@ -192,6 +152,58 @@ Fields:
   - Longitud: DECIMAL
 TTL: 24 horas (configurable)
 ```
+
+## 🏃 Ejecución
+
+### 1. Configurar Servidor Web
+
+#### Apache
+
+El archivo `.htaccess` ya está incluido en `public/`. Asegúrate de que `mod_rewrite` esté habilitado:
+
+```bash
+sudo a2enmod rewrite
+sudo service apache2 restart
+```
+
+Configurar VirtualHost (opcional):
+
+```apache
+<VirtualHost *:80>
+    ServerName telemetria.local
+    DocumentRoot /telemetria-endpoint-PHP/public
+
+    <Directory /telemetria-endpoint-PHP/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+#### Nginx
+
+```nginx
+server {
+    listen 80;
+    server_name telemetria.local;
+    root /telemetria-endpoint-PHP/public;
+
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+```
+
+
 
 ## 📡 Uso
 
@@ -363,7 +375,7 @@ telemetria-endpoint-PHP/
 └── README.md                   # Este archivo
 ```
 
-## 🔧 Módulos
+## 🧩 Módulos
 
 ### 1. Database (Abstracción de Base de Datos)
 
@@ -574,7 +586,7 @@ CREATE TABLE equipos_telemetria (
 5. **Actualizar configuración**
 6. **Instanciar nueva clase en `index.php`**
 
-## 🐛 Troubleshooting
+## 🐛 Solución de Problemas
 
 ### Error: "No se pudo conectar a Redis"
 
